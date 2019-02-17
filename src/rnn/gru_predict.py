@@ -3,10 +3,11 @@ import itertools
 import numpy as np
 import tensorflow as tf
 from keras import backend as K
-from keras.layers import Input, Dense, Activation, LSTM
+from keras.layers import Input, Dense, Activation
 from keras.layers import Reshape, Lambda
 from keras.layers.convolutional import Conv2D, MaxPooling2D
 from keras.layers.merge import add, concatenate
+from keras.layers.recurrent import GRU
 from keras.models import Model
 from keras.optimizers import SGD
 
@@ -55,18 +56,18 @@ def predict(img_w, max_text_len, weights):
     # cuts down input size going into RNN:
     inner = Dense(time_dense_size, activation=act, name='dense1')(inner)
 
-    # Two layers of bidirecitonal LSTMs
-    lstm_1 = LSTM(rnn_size, return_sequences=True, kernel_initializer='he_normal', name='lstm1')(inner)
-    lstm_1b = LSTM(rnn_size, return_sequences=True, go_backwards=True, kernel_initializer='he_normal', name='lstm1_b')(
+    # Two layers of bidirecitonal GRUs
+    gru_1 = GRU(rnn_size, return_sequences=True, kernel_initializer='he_normal', name='gru1')(inner)
+    gru_1b = GRU(rnn_size, return_sequences=True, go_backwards=True, kernel_initializer='he_normal', name='gru1_b')(
         inner)
-    lstm1_merged = add([lstm_1, lstm_1b])
-    lstm_2 = LSTM(rnn_size, return_sequences=True, kernel_initializer='he_normal', name='lstm2')(lstm1_merged)
-    lstm_2b = LSTM(rnn_size, return_sequences=True, go_backwards=True, kernel_initializer='he_normal', name='lstm2_b')(
-        lstm1_merged)
+    gru1_merged = add([gru_1, gru_1b])
+    gru_2 = GRU(rnn_size, return_sequences=True, kernel_initializer='he_normal', name='gru2')(gru1_merged)
+    gru_2b = GRU(rnn_size, return_sequences=True, go_backwards=True, kernel_initializer='he_normal', name='gru2_b')(
+        gru1_merged)
 
     # transforms RNN output to character activations:
     inner = Dense(ImageGenerator.get_output_size(), kernel_initializer='he_normal',
-                  name='dense2')(concatenate([lstm_2, lstm_2b]))
+                  name='dense2')(concatenate([gru_2, gru_2b]))
     y_pred = Activation('softmax', name='softmax')(inner)
     Model(inputs=input_data, outputs=y_pred).summary()
 
@@ -107,11 +108,10 @@ if __name__ == '__main__':
     sess = tf.Session()
     K.set_session(sess)
 
-    tiger_test = ImageGenerator('../../../data/captcha_solver/test', 128, 64, 8, 4)
+    tiger_test = ImageGenerator('data/captcha_solver/test', 128, 64, 8, 4)
     tiger_test.build_data()
 
-    model = predict(128, tiger_test.max_text_len,
-                    '../../../model/rnnLSTM6-7-8.hdf5')
+    model = predict(128, tiger_test.max_text_len, 'model/rnnGRU6-7-8.hdf5')
 
     net_inp = model.get_layer(name='the_input').input
     net_out = model.get_layer(name='softmax').output

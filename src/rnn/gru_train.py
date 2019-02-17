@@ -119,46 +119,46 @@ def decode_batch(out):
 if __name__ == '__main__':
     sess = tf.Session()
     K.set_session(sess)
-    model = train(128, '../../../data/captcha_solver/train',
-                  '../../../data/captcha_solver/validation')
-    model.save_weights('../../../model/rnnGRU6-7-8.hdf5')
+    model = train(128, 'data/captcha_solver/train',
+                  'data/captcha_solver/validation')
+    model.save_weights('model/rnnGRU6-7-8.hdf5')
 
-    # tiger_test = ImageGenerator('../../data/captcha_solver/test', 128, 64, 8, 4)
-    # tiger_test.build_data()
-    #
-    # net_inp = model.get_layer(name='the_input').input
-    # net_out = model.get_layer(name='softmax').output
-    #
-    # for inp_value, _ in tiger_test.next_batch():
-    #     bs = inp_value['the_input'].shape[0]
-    #     X_data = inp_value['the_input']
-    #     net_out_value = sess.run(net_out, feed_dict={net_inp: X_data})
-    #     pred_texts = decode_batch(net_out_value)
-    #     labels = inp_value['the_labels']
-    #     texts = []
-    #     for label in labels:
-    #         text = ''.join(list(map(lambda x: LETTERS[int(x)], label)))
-    #         texts.append(text)
-    #
-    #     for i in range(bs):
-    #         fig = plt.figure(figsize=(10, 10))
-    #         outer = gridspec.GridSpec(2, 1, wspace=10, hspace=0.1)
-    #         ax1 = plt.Subplot(fig, outer[0])
-    #         fig.add_subplot(ax1)
-    #         ax2 = plt.Subplot(fig, outer[1])
-    #         fig.add_subplot(ax2)
-    #         print('Predicted: %s\nTrue: %s' % (pred_texts[i], texts[i]))
-    #         img = X_data[i][:, :, 0].T
-    #         ax1.set_title('Input img')
-    #         ax1.imshow(img, cmap='gray')
-    #         ax1.set_xticks([])
-    #         ax1.set_yticks([])
-    #         ax2.set_title('Activations')
-    #         ax2.imshow(net_out_value[i].T, cmap='binary', interpolation='nearest')
-    #         ax2.set_yticks(list(range(len(LETTERS) + 1)))
-    #         ax2.set_yticklabels(LETTERS + ['blank'])
-    #         ax2.grid(False)
-    #         for h in np.arange(-0.5, len(LETTERS) + 1 + 0.5, 1):
-    #             ax2.axhline(h, linestyle='-', color='k', alpha=0.5, linewidth=1)
-    #         plt.show()
-    #     break
+    tiger_test = ImageGenerator('data/captcha_solver/test', 128, 64, 8, 4)
+    tiger_test.build_data()
+
+    net_inp = model.get_layer(name='the_input').input
+    net_out = model.get_layer(name='softmax').output
+
+    for inp_value, _ in tiger_test.next_batch():
+        bs = inp_value['the_input'].shape[0]
+        X_data = inp_value['the_input']
+        net_out_value = sess.run(net_out, feed_dict={net_inp: X_data})
+        pred_texts = decode_batch(net_out_value)
+        labels = inp_value['the_labels']
+        texts = []
+        for label in labels:
+            text = ''.join(list(map(lambda x: LETTERS[int(x)], label)))
+            texts.append(text)
+
+        for i in range(bs):
+            fig = plt.figure(figsize=(10, 10))
+            outer = gridspec.GridSpec(2, 1, wspace=10, hspace=0.1)
+            ax1 = plt.Subplot(fig, outer[0])
+            fig.add_subplot(ax1)
+            ax2 = plt.Subplot(fig, outer[1])
+            fig.add_subplot(ax2)
+            print('Predicted: %s\nTrue: %s' % (pred_texts[i], texts[i]))
+            img = X_data[i][:, :, 0].T
+            ax1.set_title('Input img')
+            ax1.imshow(img, cmap='gray')
+            ax1.set_xticks([])
+            ax1.set_yticks([])
+            ax2.set_title('Activations')
+            ax2.imshow(net_out_value[i].T, cmap='binary', interpolation='nearest')
+            ax2.set_yticks(list(range(len(LETTERS) + 1)))
+            ax2.set_yticklabels(LETTERS + ['blank'])
+            ax2.grid(False)
+            for h in np.arange(-0.5, len(LETTERS) + 1 + 0.5, 1):
+                ax2.axhline(h, linestyle='-', color='k', alpha=0.5, linewidth=1)
+            plt.show()
+        break

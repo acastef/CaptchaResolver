@@ -1,7 +1,5 @@
 import itertools
 
-import matplotlib.gridspec as gridspec
-import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from keras import backend as K
@@ -24,7 +22,7 @@ def ctc_lambda_func(args):
     return K.ctc_batch_cost(labels, y_pred, input_length, label_length)
 
 
-def train(img_w, train_data, val_data):
+def predict(img_w, max_text_len, weights):
     # Input Parameters
     img_h = 64
 
@@ -39,13 +37,6 @@ def train(img_w, train_data, val_data):
         input_shape = (1, img_w, img_h)
     else:
         input_shape = (img_w, img_h, 1)
-
-    batch_size = 32
-    downsample_factor = pool_size ** 2
-    tiger_train = ImageGenerator(train_data, img_w, img_h, batch_size, downsample_factor)
-    tiger_train.build_data()
-    tiger_val = ImageGenerator(val_data, img_w, img_h, batch_size, downsample_factor)
-    tiger_val.build_data()
 
     act = 'relu'
     input_data = Input(name='the_input', shape=input_shape, dtype='float32')
@@ -74,12 +65,12 @@ def train(img_w, train_data, val_data):
         lstm1_merged)
 
     # transforms RNN output to character activations:
-    inner = Dense(tiger_train.get_output_size(), kernel_initializer='he_normal',
+    inner = Dense(ImageGenerator.get_output_size(), kernel_initializer='he_normal',
                   name='dense2')(concatenate([lstm_2, lstm_2b]))
     y_pred = Activation('softmax', name='softmax')(inner)
     Model(inputs=input_data, outputs=y_pred).summary()
 
-    labels = Input(name='the_labels', shape=[tiger_train.max_text_len], dtype='float32')
+    labels = Input(name='the_labels', shape=[max_text_len], dtype='float32')
     input_length = Input(name='input_length', shape=[1], dtype='int64')
     label_length = Input(name='label_length', shape=[1], dtype='int64')
     # Keras doesn't currently support loss funcs with extra parameters
@@ -93,15 +84,12 @@ def train(img_w, train_data, val_data):
 
     # the loss calc occurs elsewhere, so use a dummy lambda func for the loss
     model.compile(loss={'ctc': lambda y_true, y_pred: y_pred}, optimizer=sgd)
-
-    model.fit_generator(generator=tiger_train.next_batch(),
-                        steps_per_epoch=tiger_train.n,
-                        epochs=1,
-                        validation_data=tiger_val.next_batch(),
-                        validation_steps=tiger_val.n)
+    model.load_weights(weights)
     return model
 
 
+# For a real OCR application, this should be beam search with a dictionary
+# and language model.  For this example, best path is sufficient.
 def decode_batch(out):
     ret = []
     for j in range(out.shape[0]):
@@ -119,46 +107,34 @@ if __name__ == '__main__':
     sess = tf.Session()
     K.set_session(sess)
 
-    model = train(128, '../../../data/captcha_solver/train',
-                  '../../../data/captcha_solver/validation')
-    model.save_weights('../../../model/rnnLSTM6-7-8.hdf5')
+    tiger_test = ImageGenerator('data/captcha_solver/test', 128, 64, 8, 4)
+    tiger_test.build_data()
 
-    # tiger_test = ImageGenerator('../../data/captcha_solver/test', 128, 64, 8, 4)
-    # tiger_test.build_data()
-    #
-    # net_inp = model.get_layer(name='the_input').input
-    # net_out = model.get_layer(name='softmax').output
-    #
-    # for inp_value, _ in tiger_test.next_batch():
-    #     bs = inp_value['the_input'].shape[0]
-    #     X_data = inp_value['the_input']
-    #     net_out_value = sess.run(net_out, feed_dict={net_inp: X_data})
-    #     pred_texts = decode_batch(net_out_value)
-    #     labels = inp_value['the_labels']
-    #     texts = []
-    #     for label in labels:
-    #         text = ''.join(list(map(lambda x: LETTERS[int(x)], label)))
-    #         texts.append(text)
-    #
-    #     for i in range(bs):
-    #         fig = plt.figure(figsize=(10, 10))
-    #         outer = gridspec.GridSpec(2, 1, wspace=10, hspace=0.1)
-    #         ax1 = plt.Subplot(fig, outer[0])
-    #         fig.add_subplot(ax1)
-    #         ax2 = plt.Subplot(fig, outer[1])
-    #         fig.add_subplot(ax2)
-    #         print('Predicted: %s\nTrue: %s' % (pred_texts[i], texts[i]))
-    #         img = X_data[i][:, :, 0].T
-    #         ax1.set_title('Input img')
-    #         ax1.imshow(img, cmap='gray')
-    #         ax1.set_xticks([])
-    #         ax1.set_yticks([])
-    #         ax2.set_title('Activations')
-    #         ax2.imshow(net_out_value[i].T, cmap='binary', interpolation='nearest')
-    #         ax2.set_yticks(list(range(len(LETTERS) + 1)))
-    #         ax2.set_yticklabels(LETTERS + ['blank'])
-    #         ax2.grid(False)
-    #         for h in np.arange(-0.5, len(LETTERS) + 1 + 0.5, 1):
-    #             ax2.axhline(h, linestyle='-', color='k', alpha=0.5, linewidth=1)
-    #         plt.show()
-    #     break
+    model = predict(128, tiger_test.max_text_len,
+                    'model/rnnLSTM6-7-8.hdf5')
+
+    net_inp = model.get_layer(name='the_input').input
+    net_out = model.get_layer(name='softmax').output
+
+    n = 0
+    valid = 0
+
+    for inp_value, _ in tiger_test.next_batch():
+        bs = inp_value['the_input'].shape[0]
+        X_data = inp_value['the_input']
+        net_out_value = sess.run(net_out, feed_dict={net_inp: X_data})
+        pred_texts = decode_batch(net_out_value)
+        labels = inp_value['the_labels']
+        texts = []
+        for label in labels:
+            text = ''.join(list(map(lambda x: LETTERS[int(x)], label)))
+            texts.append(text)
+
+        for i in range(bs):
+            n += 1
+            if pred_texts[i] == texts[i]:
+                valid += 1
+            print('Predicted: %s\nTrue: %s' % (pred_texts[i], texts[i]))
+        if n >= 1500:
+            break
+    print('Acurancy:{}%'.format(valid/n * 100))

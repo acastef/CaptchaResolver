@@ -4,8 +4,15 @@ import random
 import numpy as np
 from keras import backend as K
 
-from config.config import LETTERS
-from preprocessing.captcha_processor import CAPTCHAProcessor
+from .captcha_processor import CAPTCHAProcessor
+
+# A-Z 0-9
+LETTERS = [
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K',
+    'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
+    'W', 'X', 'Y', 'Z', '_'
+]
 
 
 def text_to_labels(text):
