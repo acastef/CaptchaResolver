@@ -111,7 +111,7 @@ if __name__ == '__main__':
     tiger_test.build_data()
 
     model = predict(128, tiger_test.max_text_len,
-                    'model/rnnLSTM6-7-8.hdf5')
+                    'model/rnn/rnnLSTM6-7-8.hdf5')
 
     net_inp = model.get_layer(name='the_input').input
     net_out = model.get_layer(name='softmax').output

@@ -121,7 +121,7 @@ if __name__ == '__main__':
 
     model = train(128, 'data/captcha_solver/train',
                   'data/captcha_solver/validation')
-    model.save_weights('model/rnnLSTM6-7-8.hdf5')
+    model.save_weights('model/rnn/rnnLSTM6-7-8.hdf5')
 
     tiger_test = ImageGenerator('data/captcha_solver/test', 128, 64, 8, 4)
     tiger_test.build_data()

@@ -111,7 +111,7 @@ if __name__ == '__main__':
     tiger_test = ImageGenerator('data/captcha_solver/test', 128, 64, 8, 4)
     tiger_test.build_data()
 
-    model = predict(128, tiger_test.max_text_len, 'model/rnnGRU6-7-8.hdf5')
+    model = predict(128, tiger_test.max_text_len, 'model/rnn/rnnGRU6-7-8.hdf5')
 
     net_inp = model.get_layer(name='the_input').input
     net_out = model.get_layer(name='softmax').output
