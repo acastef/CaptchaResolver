@@ -1116,7 +1116,6 @@ def get_data(input_path, train):
 
             line_split = line.strip().split('\t')
             filename = line_split[0]
-            print(filename)
             class_name = 'captcha'
             all_boxes = line_split[1].strip().split(';')
 
@@ -1126,7 +1125,6 @@ def get_data(input_path, train):
                 xmin, ymin = min.strip().split(':')
                 xmax, ymax = max.strip().split(':')
                 boxes.append((xmin, ymin, xmax, ymax))
-            print(boxes)
 
             # Make sure the info saved in annotation file matching the format (path_filename, x1, y1, x2, y2, class_name)
             # Note:
@@ -1165,14 +1163,10 @@ def get_data(input_path, train):
                 path += filename
                 img = cv2.imread(path)
                 (rows, cols) = img.shape[:2]
-                all_imgs[filename]['filepath'] = filename
+                all_imgs[filename]['filepath'] = path
                 all_imgs[filename]['width'] = cols
                 all_imgs[filename]['height'] = rows
                 all_imgs[filename]['bboxes'] = []
-            # if np.random.randint(0,6) > 0:
-            # 	all_imgs[filename]['imageset'] = 'trainval'
-            # else:
-            # 	all_imgs[filename]['imageset'] = 'test'
 
             for box in boxes:
                 all_imgs[filename]['bboxes'].append(
