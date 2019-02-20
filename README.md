@@ -62,22 +62,23 @@ You need to put this file in next folder in project: CaptchaResolver/model/faste
 File should be named model_frcnn_vgg.hdf5.
 To run demo, you need to follow this next commands: 
 * `cd src/detection` # make your current working directory src/detection
-* `python demo.py` #python command should be anaconda python interpreter
+* `python demo.py` # python command should be anaconda python interpreter
+
+### Demo result
+![demo](https://github.com/acastef/CaptchaResolver/blob/master/images/detection/7.png)
 
 To run Faster R-CNN separately from RNN on test data, follow next commands:
 * `cd src/detection` # make your current working directory src/detection
-* `python test.py` 
+* `python test.py`
 
 This action should last at least one hour. You can skip this command, and results of this command are placed in [this](https://github.com/acastef/CaptchaResolver/blob/master/test_logs/detection.log) file.
 
 To run RNN LSTM separately from Faster R-CNN on test data, follow next commands:
-* `cd/src/rnn`
-* `python lstm_predict.py`
+* `python lstm_predict.py` # current working directory has to be project root directory (CaptchaResolver)
 
 If you want to skip this commands, results are placed in [this](https://github.com/acastef/CaptchaResolver/blob/master/test_logs/lstm.log) file. 
 
 To run RNN GRU separately from Faster R-CNN on test data, follow next commands:
-* `cd/src/rnn`
-* `python gru_predict.py`
+* `python gru_predict.py` # current working directory has to be project root directory (CaptchaResolver)
 
 If you want to skip this commands, results are placed in [this](https://github.com/acastef/CaptchaResolver/blob/master/test_logs/gru.log) file.
